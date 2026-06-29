@@ -37,12 +37,13 @@ class ProjectDetailScreen extends ConsumerWidget {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) async {
+              final actions = ref.read(projectDetailActionsProvider(projectId));
               switch (value) {
                 case 'pin':
-                  ref.read(projectDetailProvider(projectId).notifier).togglePin();
+                  actions.togglePin();
                   break;
                 case 'complete':
-                  ref.read(projectDetailProvider(projectId).notifier).markComplete();
+                  actions.markComplete();
                   break;
                 case 'delete':
                   _showDeleteDialog(context, ref);
@@ -192,10 +193,8 @@ class ProjectDetailScreen extends ConsumerWidget {
                           return ProductCard(
                             product: products[index],
                             onTogglePurchase: () {
-                              ref
-                                  .read(projectProductsProvider(projectId)
-                                      .notifier)
-                                  .togglePurchase(products[index].id);
+                              // TODO: 实现已购/未购切换
+                              ref.invalidate(projectProductsProvider(projectId));
                             },
                           );
                         },
@@ -269,7 +268,8 @@ class ProjectDetailScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () {
-              ref.read(projectDetailProvider(projectId).notifier).delete();
+              final actions = ref.read(projectDetailActionsProvider(projectId));
+              actions.delete();
               Navigator.pop(context);
               context.pop();
             },

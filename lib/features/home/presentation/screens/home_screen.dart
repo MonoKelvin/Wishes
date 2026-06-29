@@ -20,31 +20,19 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('心愿'),
         actions: [
           // 同步按钮
-          syncState.when(
-            data: (state) => IconButton(
-              icon: state.isSyncing
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.sync),
-              onPressed: state.isSyncing
-                  ? null
-                  : () {
-                      ref.read(syncStateProvider.notifier).syncProducts();
-                    },
-            ),
-            loading: () => const IconButton(
-              icon: Icon(Icons.sync),
-              onPressed: null,
-            ),
-            error: (_, __) => IconButton(
-              icon: const Icon(Icons.sync),
-              onPressed: () {
-                ref.read(syncStateProvider.notifier).syncProducts();
-              },
-            ),
+          IconButton(
+            icon: syncState.isSyncing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.sync),
+            onPressed: syncState.isSyncing
+                ? null
+                : () {
+                    ref.read(syncStateProvider.notifier).syncProducts();
+                  },
           ),
           // 用户头像
           IconButton(
@@ -58,36 +46,31 @@ class HomeScreen extends ConsumerWidget {
       body: Column(
         children: [
           // 同步状态信息
-          syncState.when(
-            data: (state) => state.lastSyncTime != null
-                ? Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.spacingM,
-                      vertical: AppTheme.spacingXS,
+          if (syncState.lastSyncTime != null)
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingM,
+                vertical: AppTheme.spacingXS,
+              ),
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: AppTheme.primaryColor,
+                  ),
+                  const SizedBox(width: AppTheme.spacingXS),
+                  Text(
+                    '已同步 ${syncState.syncedCount} 件商品',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontSize: 12,
                     ),
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 16,
-                          color: AppTheme.primaryColor,
-                        ),
-                        const SizedBox(width: AppTheme.spacingXS),
-                        Text(
-                          '已同步 ${state.syncedCount} 件商品',
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : const SizedBox.shrink(),
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
+                  ),
+                ],
+              ),
+            ),
 
           // 项目列表
           Expanded(

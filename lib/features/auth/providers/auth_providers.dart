@@ -25,19 +25,20 @@ final refreshTokenUseCaseProvider = Provider<RefreshTokenUseCase>((ref) {
 });
 
 // Auth State
-final authStateProvider = StateNotifierProvider<AuthNotifier, AsyncValue<User?>>((ref) {
-  return AuthNotifier(ref);
+final authStateProvider = AsyncNotifierProvider<AuthNotifier, User?>(() {
+  return AuthNotifier();
 });
 
-class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
-  final Ref _ref;
-
-  AuthNotifier(this._ref) : super(const AsyncValue.data(null));
+class AuthNotifier extends AsyncNotifier<User?> {
+  @override
+  Future<User?> build() async {
+    return null;
+  }
 
   Future<void> login() async {
     state = const AsyncValue.loading();
     try {
-      final loginUseCase = _ref.read(loginUseCaseProvider);
+      final loginUseCase = ref.read(loginUseCaseProvider);
       final user = await loginUseCase();
       state = AsyncValue.data(user);
     } catch (e, stack) {
@@ -48,7 +49,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   Future<void> logout() async {
     state = const AsyncValue.loading();
     try {
-      final authRepository = _ref.read(authRepositoryProvider);
+      final authRepository = ref.read(authRepositoryProvider);
       await authRepository.logout();
       state = const AsyncValue.data(null);
     } catch (e, stack) {
@@ -59,7 +60,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   Future<void> checkAuth() async {
     state = const AsyncValue.loading();
     try {
-      final authRepository = _ref.read(authRepositoryProvider);
+      final authRepository = ref.read(authRepositoryProvider);
       final isLoggedIn = await authRepository.isLoggedIn();
       if (isLoggedIn) {
         final user = await authRepository.getCurrentUser();

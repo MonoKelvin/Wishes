@@ -9,9 +9,8 @@ import '../../../data/datasources/remote/pdd_api_datasource.dart';
 import '../../home/providers/home_providers.dart';
 
 // Sync Progress State
-final syncProgressProvider =
-    StateNotifierProvider<SyncProgressNotifier, SyncProgressState>((ref) {
-  return SyncProgressNotifier(ref);
+final syncProgressProvider = NotifierProvider<SyncProgressNotifier, SyncProgressState>(() {
+  return SyncProgressNotifier();
 });
 
 class SyncProgressState {
@@ -46,16 +45,16 @@ class SyncProgressState {
   }
 }
 
-class SyncProgressNotifier extends StateNotifier<SyncProgressState> {
-  final Ref _ref;
-
-  SyncProgressNotifier(this._ref)
-      : super(const SyncProgressState(
-          isSyncing: false,
-          progress: 0,
-          syncedCount: 0,
-          totalCount: 0,
-        ));
+class SyncProgressNotifier extends Notifier<SyncProgressState> {
+  @override
+  SyncProgressState build() {
+    return const SyncProgressState(
+      isSyncing: false,
+      progress: 0,
+      syncedCount: 0,
+      totalCount: 0,
+    );
+  }
 
   Future<void> startSync() async {
     state = state.copyWith(
@@ -67,7 +66,7 @@ class SyncProgressNotifier extends StateNotifier<SyncProgressState> {
     );
 
     try {
-      final syncUseCase = _ref.read(syncProductsUseCaseProvider);
+      final syncUseCase = ref.read(syncProductsUseCaseProvider);
       final result = await syncUseCase();
 
       if (result.isSuccess) {
@@ -79,7 +78,7 @@ class SyncProgressNotifier extends StateNotifier<SyncProgressState> {
         );
 
         // 刷新项目列表
-        _ref.read(projectListProvider.notifier).refresh();
+        ref.read(projectListProvider.notifier).refresh();
       } else {
         state = state.copyWith(
           isSyncing: false,

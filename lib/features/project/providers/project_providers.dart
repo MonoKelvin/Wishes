@@ -45,36 +45,27 @@ final searchProductsUseCaseProvider = Provider<SearchProductsUseCase>((ref) {
 });
 
 // Project Detail State
-final projectDetailProvider = StateNotifierProvider.family<
-    ProjectDetailNotifier, AsyncValue<Project>, String>((ref, projectId) {
-  return ProjectDetailNotifier(ref, projectId);
+final projectDetailProvider = FutureProvider.autoDispose.family<Project, String>((ref, projectId) async {
+  final projectRepository = ref.read(projectRepositoryProvider);
+  return await projectRepository.getProject(projectId);
 });
 
-class ProjectDetailNotifier extends StateNotifier<AsyncValue<Project>> {
+// Project Detail Actions
+final projectDetailActionsProvider = Provider.autoDispose.family<ProjectDetailActions, String>((ref, projectId) {
+  return ProjectDetailActions(ref, projectId);
+});
+
+class ProjectDetailActions {
   final Ref _ref;
   final String _projectId;
 
-  ProjectDetailNotifier(this._ref, this._projectId)
-      : super(const AsyncValue.loading()) {
-    loadProject();
-  }
-
-  Future<void> loadProject() async {
-    state = const AsyncValue.loading();
-    try {
-      final projectRepository = _ref.read(projectRepositoryProvider);
-      final project = await projectRepository.getProject(_projectId);
-      state = AsyncValue.data(project);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
+  ProjectDetailActions(this._ref, this._projectId);
 
   Future<void> togglePin() async {
     try {
       final projectRepository = _ref.read(projectRepositoryProvider);
       await projectRepository.togglePin(_projectId);
-      await loadProject();
+      _ref.invalidate(projectDetailProvider(_projectId));
       _ref.read(projectListProvider.notifier).refresh();
     } catch (e) {
       // 错误处理
@@ -85,7 +76,7 @@ class ProjectDetailNotifier extends StateNotifier<AsyncValue<Project>> {
     try {
       final projectRepository = _ref.read(projectRepositoryProvider);
       await projectRepository.markComplete(_projectId);
-      await loadProject();
+      _ref.invalidate(projectDetailProvider(_projectId));
       _ref.read(projectListProvider.notifier).refresh();
     } catch (e) {
       // 错误处理
@@ -104,66 +95,39 @@ class ProjectDetailNotifier extends StateNotifier<AsyncValue<Project>> {
 }
 
 // Products in Project State
-final projectProductsProvider = StateNotifierProvider.family<
-    ProjectProductsNotifier, AsyncValue<List<Product>>, String>((ref, projectId) {
-  return ProjectProductsNotifier(ref, projectId);
+final projectProductsProvider = FutureProvider.autoDispose.family<List<Product>, String>((ref, projectId) async {
+  final productRepository = ref.read(productRepositoryProvider);
+  return await productRepository.getProductsByProject(projectId);
 });
-
-class ProjectProductsNotifier extends StateNotifier<AsyncValue<List<Product>>> {
-  final Ref _ref;
-  final String _projectId;
-
-  ProjectProductsNotifier(this._ref, this._projectId)
-      : super(const AsyncValue.loading()) {
-    loadProducts();
-  }
-
-  Future<void> loadProducts() async {
-    state = const AsyncValue.loading();
-    try {
-      final productRepository = _ref.read(productRepositoryProvider);
-      final products = await productRepository.getProductsByProject(_projectId);
-      state = AsyncValue.data(products);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
-
-  Future<void> togglePurchase(String productId) async {
-    // TODO: 实现已购/未购切换
-    await loadProducts();
-  }
-}
 
 // All Products State (for product selector)
-final allProductsProvider =
-    StateNotifierProvider<AllProductsNotifier, AsyncValue<List<Product>>>((ref) {
-  return AllProductsNotifier(ref);
+final allProductsProvider = AsyncNotifierProvider<AllProductsNotifier, List<Product>>(() {
+  return AllProductsNotifier();
 });
 
-class AllProductsNotifier extends StateNotifier<AsyncValue<List<Product>>> {
-  final Ref _ref;
-
-  AllProductsNotifier(this._ref) : super(const AsyncValue.loading()) {
-    loadProducts();
-  }
-
-  Future<void> loadProducts() async {
-    state = const AsyncValue.loading();
-    try {
-      final getProductsUseCase = _ref.read(getProductsUseCaseProvider);
-      final products = await getProductsUseCase();
-      state = AsyncValue.data(products);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
+class AllProductsNotifier extends AsyncNotifier<List<Product>> {
+  @override
+  Future<List<Product>> build() async {
+    final getProductsUseCase = ref.read(getProductsUseCaseProvider);
+    return await getProductsUseCase();
   }
 
   Future<void> search(String keyword) async {
     state = const AsyncValue.loading();
     try {
-      final searchUseCase = _ref.read(searchProductsUseCaseProvider);
+      final searchUseCase = ref.read(searchProductsUseCaseProvider);
       final products = await searchUseCase(keyword);
+      state = AsyncValue.data(products);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
+
+  Future<void> loadProducts() async {
+    state = const AsyncValue.loading();
+    try {
+      final getProductsUseCase = ref.read(getProductsUseCaseProvider);
+      final products = await getProductsUseCase();
       state = AsyncValue.data(products);
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
@@ -172,13 +136,15 @@ class AllProductsNotifier extends StateNotifier<AsyncValue<List<Product>>> {
 }
 
 // Selected Products State
-final selectedProductsProvider =
-    StateNotifierProvider<SelectedProductsNotifier, Set<String>>((ref) {
+final selectedProductsProvider = NotifierProvider<SelectedProductsNotifier, Set<String>>(() {
   return SelectedProductsNotifier();
 });
 
-class SelectedProductsNotifier extends StateNotifier<Set<String>> {
-  SelectedProductsNotifier() : super({});
+class SelectedProductsNotifier extends Notifier<Set<String>> {
+  @override
+  Set<String> build() {
+    return {};
+  }
 
   void toggle(String productId) {
     if (state.contains(productId)) {

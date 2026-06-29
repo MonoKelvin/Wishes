@@ -8,28 +8,7 @@ import '../../../data/datasources/local/local_datasource.dart';
 import '../../project/providers/project_providers.dart';
 
 // Product Detail State
-final productDetailProvider = StateNotifierProvider.family<
-    ProductDetailNotifier, AsyncValue<Product>, String>((ref, productId) {
-  return ProductDetailNotifier(ref, productId);
+final productDetailProvider = FutureProvider.autoDispose.family<Product, String>((ref, productId) async {
+  final productRepository = ref.read(productRepositoryProvider);
+  return await productRepository.getProductDetail(productId);
 });
-
-class ProductDetailNotifier extends StateNotifier<AsyncValue<Product>> {
-  final Ref _ref;
-  final String _productId;
-
-  ProductDetailNotifier(this._ref, this._productId)
-      : super(const AsyncValue.loading()) {
-    loadProduct();
-  }
-
-  Future<void> loadProduct() async {
-    state = const AsyncValue.loading();
-    try {
-      final productRepository = _ref.read(productRepositoryProvider);
-      final product = await productRepository.getProductDetail(_productId);
-      state = AsyncValue.data(product);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
-}

@@ -34,38 +34,32 @@ final syncProductsUseCaseProvider = Provider<SyncProductsUseCase>((ref) {
 });
 
 // Project List State
-final projectListProvider =
-    StateNotifierProvider<ProjectListNotifier, AsyncValue<List<Project>>>((ref) {
-  return ProjectListNotifier(ref);
+final projectListProvider = AsyncNotifierProvider<ProjectListNotifier, List<Project>>(() {
+  return ProjectListNotifier();
 });
 
-class ProjectListNotifier extends StateNotifier<AsyncValue<List<Project>>> {
-  final Ref _ref;
-
-  ProjectListNotifier(this._ref) : super(const AsyncValue.loading()) {
-    loadProjects();
+class ProjectListNotifier extends AsyncNotifier<List<Project>> {
+  @override
+  Future<List<Project>> build() async {
+    final getProjectsUseCase = ref.read(getProjectsUseCaseProvider);
+    return await getProjectsUseCase();
   }
 
-  Future<void> loadProjects() async {
+  Future<void> refresh() async {
     state = const AsyncValue.loading();
     try {
-      final getProjectsUseCase = _ref.read(getProjectsUseCaseProvider);
+      final getProjectsUseCase = ref.read(getProjectsUseCaseProvider);
       final projects = await getProjectsUseCase();
       state = AsyncValue.data(projects);
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
     }
   }
-
-  Future<void> refresh() async {
-    await loadProjects();
-  }
 }
 
 // Sync State
-final syncStateProvider =
-    StateNotifierProvider<SyncNotifier, AsyncValue<SyncState>>((ref) {
-  return SyncNotifier(ref);
+final syncStateProvider = NotifierProvider<SyncNotifier, SyncState>(() {
+  return SyncNotifier();
 });
 
 class SyncState {
@@ -80,43 +74,43 @@ class SyncState {
   });
 }
 
-class SyncNotifier extends StateNotifier<AsyncValue<SyncState>> {
-  final Ref _ref;
-
-  SyncNotifier(this._ref) : super(const AsyncValue.data(SyncState(isSyncing: false, syncedCount: 0))) {
+class SyncNotifier extends Notifier<SyncState> {
+  @override
+  SyncState build() {
     _loadSyncState();
+    return const SyncState(isSyncing: false, syncedCount: 0);
   }
 
   Future<void> _loadSyncState() async {
     try {
-      final syncRepository = _ref.read(syncRepositoryProvider);
+      final syncRepository = ref.read(syncRepositoryProvider);
       final lastSyncTime = await syncRepository.getLastSyncTime();
       final syncedCount = await syncRepository.getSyncedCount();
-      state = AsyncValue.data(SyncState(
+      state = SyncState(
         isSyncing: false,
         lastSyncTime: lastSyncTime,
         syncedCount: syncedCount,
-      ));
+      );
     } catch (e) {
       // 忽略错误
     }
   }
 
   Future<void> syncProducts() async {
-    state = const AsyncValue.data(SyncState(isSyncing: true, syncedCount: 0));
+    state = const SyncState(isSyncing: true, syncedCount: 0);
     try {
-      final syncUseCase = _ref.read(syncProductsUseCaseProvider);
+      final syncUseCase = ref.read(syncProductsUseCaseProvider);
       final result = await syncUseCase();
-      state = AsyncValue.data(SyncState(
+      state = SyncState(
         isSyncing: false,
         lastSyncTime: result.syncTime,
         syncedCount: result.syncedCount,
-      ));
+      );
 
       // 刷新项目列表
-      _ref.read(projectListProvider.notifier).refresh();
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
+      ref.read(projectListProvider.notifier).refresh();
+    } catch (e) {
+      state = const SyncState(isSyncing: false, syncedCount: 0);
     }
   }
 }
