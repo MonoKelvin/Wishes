@@ -1,0 +1,273 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../app/theme.dart';
+import '../../providers/project_providers.dart';
+import '../../../home/providers/home_providers.dart';
+import '../widgets/product_selector.dart';
+
+class CreateProjectScreen extends ConsumerStatefulWidget {
+  const CreateProjectScreen({super.key});
+
+  @override
+  ConsumerState<CreateProjectScreen> createState() =>
+      _CreateProjectScreenState();
+}
+
+class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  String _selectedScene = '装修采购';
+  final List<String> _selectedTags = [];
+
+  // 预置场景列表
+  final List<String> _scenes = [
+    '装修采购',
+    '节日备货',
+    '批量采购',
+    '日常购物',
+    '礼物清单',
+    '旅行购物',
+    '其他',
+  ];
+
+  // 预置标签列表
+  final List<String> _availableTags = [
+    '紧急',
+    '重要',
+    '优惠',
+    '待比价',
+    '已比价',
+    '可购买',
+  ];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedProductIds = ref.watch(selectedProductsProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text('创建心愿'),
+        actions: [
+          TextButton(
+            onPressed: _createProject,
+            child: Text(
+              '创建',
+              style: TextStyle(
+                color: selectedProductIds.isNotEmpty
+                    ? AppTheme.primaryColor
+                    : AppTheme.textHintColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            // 表单区域
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              color: AppTheme.surfaceColor,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 项目名称
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: '项目名称',
+                      hintText: '输入心愿项目名称',
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppTheme.radiusMedium),
+                      ),
+                      prefixIcon: const Icon(Icons.favorite_outline),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return '请输入项目名称';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+
+                  // 场景选择
+                  Text(
+                    '选择场景',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Wrap(
+                    spacing: AppTheme.spacingXS,
+                    runSpacing: AppTheme.spacingXS,
+                    children: _scenes.map((scene) {
+                      final isSelected = _selectedScene == scene;
+                      return ChoiceChip(
+                        label: Text(scene),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _selectedScene = scene;
+                            });
+                          }
+                        },
+                        backgroundColor: AppTheme.surfaceColor,
+                        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? AppTheme.primaryColor
+                              : AppTheme.textPrimaryColor,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusSmall),
+                          side: BorderSide(
+                            color: isSelected
+                                ? AppTheme.primaryColor
+                                : AppTheme.textHintColor.withOpacity(0.3),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+
+                  // 标签选择
+                  Text(
+                    '添加标签',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Wrap(
+                    spacing: AppTheme.spacingXS,
+                    runSpacing: AppTheme.spacingXS,
+                    children: _availableTags.map((tag) {
+                      final isSelected = _selectedTags.contains(tag);
+                      return FilterChip(
+                        label: Text(tag),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedTags.add(tag);
+                            } else {
+                              _selectedTags.remove(tag);
+                            }
+                          });
+                        },
+                        backgroundColor: AppTheme.surfaceColor,
+                        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                        checkmarkColor: AppTheme.primaryColor,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? AppTheme.primaryColor
+                              : AppTheme.textPrimaryColor,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusSmall),
+                          side: BorderSide(
+                            color: isSelected
+                                ? AppTheme.primaryColor
+                                : AppTheme.textHintColor.withOpacity(0.3),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+
+            // 商品选择区域标题
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingM,
+                vertical: AppTheme.spacingS,
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    '选择商品',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                  const Spacer(),
+                  if (selectedProductIds.isNotEmpty)
+                    Text(
+                      '已选 ${selectedProductIds.length} 件',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // 商品选择器
+            Expanded(
+              child: ProductSelector(
+                projectId: '', // 新项目还没有ID
+                initialSelectedIds: const {},
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _createProject() {
+    if (_formKey.currentState!.validate()) {
+      final selectedIds = ref.read(selectedProductsProvider);
+      if (selectedIds.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('请至少选择一件商品'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+        return;
+      }
+
+      // 创建项目
+      ref.read(createProjectUseCaseProvider).call(
+            name: _nameController.text,
+            scene: _selectedScene,
+            tags: _selectedTags,
+          );
+
+      // 刷新项目列表
+      ref.read(projectListProvider.notifier).refresh();
+
+      // 清除选择
+      ref.read(selectedProductsProvider.notifier).clear();
+
+      // 返回首页
+      context.pop();
+    }
+  }
+}

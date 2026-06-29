@@ -1,0 +1,67 @@
+name: wishes
+description: A Flutter application for managing shopping wishes and purchase lists.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 状态管理
+  flutter_riverpod: ^2.4.0
+  riverpod_annotation: ^2.3.0
+
+  # 路由管理
+  go_router: ^12.0.0
+
+  # 网络请求
+  dio: ^5.4.0
+
+  # 本地存储
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # 加密存储
+  flutter_secure_storage: ^9.0.0
+
+  # 图片加载
+  cached_network_image: ^3.3.0
+
+  # 动画
+  flutter_motion_ui: ^1.0.3
+
+  # UI组件
+  getwidget: ^3.1.0
+
+  # 工具
+  intl: ^0.18.0
+  logger: ^2.0.0
+  path_provider: ^2.1.0
+  uuid: ^4.0.0
+  crypto: ^3.0.3
+  url_launcher: ^6.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # 代码生成
+  build_runner: ^2.4.0
+  riverpod_generator: ^2.3.0
+
+  # 测试
+  mockito: ^5.4.0
+  build_test: ^2.2.0
+
+  # 代码规范
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/

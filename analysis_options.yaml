@@ -1,0 +1,24 @@
+# This file configures the analyzer to use the lint rules from the
+# flutter_lints package.
+#
+# The flutter_lints package contains a set of recommended lint rules to
+# encourage good coding practices. These rules are documented at
+# https://pub.dev/packages/flutter_lints
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+linter:
+  rules:
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - avoid_print
+    - avoid_unnecessary_containers
+    - prefer_single_quotes
+    - sort_child_properties_last
+    - use_build_context_synchronously
