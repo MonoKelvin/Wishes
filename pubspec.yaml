@@ -20,31 +20,18 @@ dependencies:
   # 网络请求
   dio: ^5.7.0
 
-  # WebView (用于OAuth授权页面)
-  webview_flutter: ^4.10.0
-
   # 本地存储
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
-  # 加密存储
-  flutter_secure_storage: ^9.2.4
-
   # 图片加载
   cached_network_image: ^3.4.1
-
-  # 动画
-  flutter_motion_ui: ^1.0.3
-
-  # UI组件
-  getwidget: ^4.0.0
 
   # 工具
   intl: ^0.19.0
   logger: ^2.5.0
   path_provider: ^2.1.5
   uuid: ^4.5.1
-  crypto: ^3.0.6
   url_launcher: ^6.3.1
 
 dev_dependencies:

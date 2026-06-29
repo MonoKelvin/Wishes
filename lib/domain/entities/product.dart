@@ -9,6 +9,13 @@ class Product {
   final List<String> projectIds;
   final String? categoryId;
   final DateTime syncedAt;
+  final String? affiliateUrl;
+  final String? couponUrl;
+  final String? tkl;
+  final double? commissionRate;
+  final String? shopName;
+  final int? salesCount;
+  final String? couponInfo;
 
   const Product({
     required this.id,
@@ -21,6 +28,13 @@ class Product {
     required this.projectIds,
     this.categoryId,
     required this.syncedAt,
+    this.affiliateUrl,
+    this.couponUrl,
+    this.tkl,
+    this.commissionRate,
+    this.shopName,
+    this.salesCount,
+    this.couponInfo,
   });
 
   Product copyWith({
@@ -34,6 +48,13 @@ class Product {
     List<String>? projectIds,
     String? categoryId,
     DateTime? syncedAt,
+    String? affiliateUrl,
+    String? couponUrl,
+    String? tkl,
+    double? commissionRate,
+    String? shopName,
+    int? salesCount,
+    String? couponInfo,
   }) {
     return Product(
       id: id ?? this.id,
@@ -46,6 +67,13 @@ class Product {
       projectIds: projectIds ?? this.projectIds,
       categoryId: categoryId ?? this.categoryId,
       syncedAt: syncedAt ?? this.syncedAt,
+      affiliateUrl: affiliateUrl ?? this.affiliateUrl,
+      couponUrl: couponUrl ?? this.couponUrl,
+      tkl: tkl ?? this.tkl,
+      commissionRate: commissionRate ?? this.commissionRate,
+      shopName: shopName ?? this.shopName,
+      salesCount: salesCount ?? this.salesCount,
+      couponInfo: couponInfo ?? this.couponInfo,
     );
   }
 
@@ -61,6 +89,13 @@ class Product {
       'projectIds': projectIds,
       'categoryId': categoryId,
       'syncedAt': syncedAt.toIso8601String(),
+      'affiliateUrl': affiliateUrl,
+      'couponUrl': couponUrl,
+      'tkl': tkl,
+      'commissionRate': commissionRate,
+      'shopName': shopName,
+      'salesCount': salesCount,
+      'couponInfo': couponInfo,
     };
   }
 
@@ -78,6 +113,15 @@ class Product {
       projectIds: List<String>.from(json['projectIds'] as List),
       categoryId: json['categoryId'] as String?,
       syncedAt: DateTime.parse(json['syncedAt'] as String),
+      affiliateUrl: json['affiliateUrl'] as String?,
+      couponUrl: json['couponUrl'] as String?,
+      tkl: json['tkl'] as String?,
+      commissionRate: json['commissionRate'] != null
+          ? (json['commissionRate'] as num).toDouble()
+          : null,
+      shopName: json['shopName'] as String?,
+      salesCount: json['salesCount'] as int?,
+      couponInfo: json['couponInfo'] as String?,
     );
   }
 

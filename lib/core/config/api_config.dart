@@ -1,13 +1,33 @@
+import 'package:hive_flutter/hive_flutter.dart';
+
 class ApiConfig {
-  // 拼多多API配置
-  static const String pddClientId = '1a611aeba8a6499baae38b50570925b1';
-  static const String pddClientSecret = '9717baa2b3036426eb495bc2f27aeecd959e2e0e';
+  static const String _configBox = 'api_config';
+
+  // 默认配置
+  static String _zhetaokeAppkey = 'c5e70bd48a2e421eaa7ce0d8d167fd22';
+
+  // Getters
+  static String get zhetaokeAppkey => _zhetaokeAppkey;
 
   // API基础URL
-  static const String pddBaseUrl = 'https://open-api.pinduoduo.com/api/router';
-  static const String pddAuthUrl = 'https://mms.pinduoduo.com/open.html';
+  static const String zhetaokeBaseUrl =
+      'https://api.zhetaoke.com:10001/api';
 
-  // OAuth配置
-  static const String pddRedirectUri = 'https://open.pinduoduo.com/oauth/callback';
-  static const String pddScope = 'basic';
+  // Setters
+  static void setConfig({String? appkey}) {
+    if (appkey != null) _zhetaokeAppkey = appkey;
+  }
+
+  // 从本地存储加载配置
+  static Future<void> loadFromStorage() async {
+    final box = await Hive.openBox(_configBox);
+    _zhetaokeAppkey =
+        box.get('zhetaoke_appkey', defaultValue: _zhetaokeAppkey);
+  }
+
+  // 保存配置到本地存储
+  static Future<void> saveToStorage() async {
+    final box = await Hive.openBox(_configBox);
+    await box.put('zhetaoke_appkey', _zhetaokeAppkey);
+  }
 }

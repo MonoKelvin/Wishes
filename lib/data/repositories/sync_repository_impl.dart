@@ -1,15 +1,15 @@
 import '../../core/error/exceptions.dart';
 import '../../domain/repositories/sync_repository.dart';
 import '../datasources/local/local_datasource.dart';
-import '../datasources/remote/pdd_api_datasource.dart';
+import '../datasources/remote/platform_api.dart';
 import '../mappers/product_mapper.dart';
 
 class SyncRepositoryImpl implements SyncRepository {
-  final PddApiDataSource _apiDataSource;
+  final PlatformApiDataSource _apiDataSource;
   final LocalDataSource _localDataSource;
 
   SyncRepositoryImpl({
-    required PddApiDataSource apiDataSource,
+    required PlatformApiDataSource apiDataSource,
     required LocalDataSource localDataSource,
   })  : _apiDataSource = apiDataSource,
         _localDataSource = localDataSource;
@@ -22,35 +22,29 @@ class SyncRepositoryImpl implements SyncRepository {
       bool hasMore = true;
 
       while (hasMore) {
-        // 调用拼多多API获取商品列表
-        final response = await _apiDataSource.searchGoods(
-          keyword: '', // 空关键词获取所有商品
+        final products = await _apiDataSource.getRecommendations(
           page: page,
           pageSize: 50,
         );
 
-        if (response.goodsList.isEmpty) {
+        if (products.isEmpty) {
           hasMore = false;
           break;
         }
 
-        // 转换并保存商品
-        for (final pddGoods in response.goodsList) {
-          final product = ProductMapper.fromPddGoods(pddGoods);
+        for (final product in products) {
           final localProduct = ProductMapper.toLocal(product);
           await _localDataSource.saveProduct(localProduct);
           syncedCount++;
         }
 
-        // 检查是否还有更多数据
-        if (response.goodsList.length < 50) {
+        if (products.length < 50) {
           hasMore = false;
         } else {
           page++;
         }
       }
 
-      // 更新同步状态
       final syncTime = DateTime.now();
       await _localDataSource.saveLastSyncTime(syncTime);
       await _localDataSource.saveSyncedCount(syncedCount);

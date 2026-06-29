@@ -2,14 +2,18 @@ import '../../core/error/exceptions.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../datasources/local/local_datasource.dart';
+import '../datasources/remote/platform_api.dart';
 import '../mappers/product_mapper.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final LocalDataSource _localDataSource;
+  final PlatformApiDataSource _apiDataSource;
 
   ProductRepositoryImpl({
     required LocalDataSource localDataSource,
-  }) : _localDataSource = localDataSource;
+    required PlatformApiDataSource apiDataSource,
+  })  : _localDataSource = localDataSource,
+        _apiDataSource = apiDataSource;
 
   @override
   Future<List<Product>> getProducts() async {
@@ -47,7 +51,6 @@ class ProductRepositoryImpl implements ProductRepository {
       return allProducts.where((product) {
         if (minPrice != null && product.price < minPrice) return false;
         if (maxPrice != null && product.price > maxPrice) return false;
-        // TODO: 实现已购/未购筛选
         return true;
       }).toList();
     } catch (e) {
@@ -90,7 +93,8 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<void> removeProductFromProject(String productId, String projectId) async {
+  Future<void> removeProductFromProject(
+      String productId, String projectId) async {
     try {
       final localProduct = _localDataSource.getProduct(productId);
       if (localProduct == null) {
@@ -98,7 +102,8 @@ class ProductRepositoryImpl implements ProductRepository {
       }
 
       final product = ProductMapper.toEntity(localProduct);
-      final updatedProjectIds = product.projectIds.where((id) => id != projectId).toList();
+      final updatedProjectIds =
+          product.projectIds.where((id) => id != projectId).toList();
       final updatedProduct = product.copyWith(projectIds: updatedProjectIds);
       final updatedLocalProduct = ProductMapper.toLocal(updatedProduct);
       await _localDataSource.saveProduct(updatedLocalProduct);
@@ -108,7 +113,8 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<void> moveProductToCategory(String productId, String categoryId) async {
+  Future<void> moveProductToCategory(
+      String productId, String categoryId) async {
     try {
       final localProduct = _localDataSource.getProduct(productId);
       if (localProduct == null) {
@@ -133,6 +139,60 @@ class ProductRepositoryImpl implements ProductRepository {
       }).toList();
     } catch (e) {
       throw CacheException('获取项目商品列表失败: $e');
+    }
+  }
+
+  @override
+  Future<List<Product>> searchRemoteProducts(String keyword,
+      {int page = 1, int pageSize = 20}) async {
+    try {
+      return await _apiDataSource.searchByKeyword(keyword,
+          page: page, pageSize: pageSize);
+    } catch (e) {
+      throw ServerException(500, '搜索商品失败: $e');
+    }
+  }
+
+  @override
+  Future<List<Product>> getRemoteRecommendations({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      return await _apiDataSource.getRecommendations(
+        page: page,
+        pageSize: pageSize,
+      );
+    } catch (e) {
+      throw ServerException(500, '获取推荐商品失败: $e');
+    }
+  }
+
+  @override
+  Future<Product?> convertLink(String link) async {
+    try {
+      return await _apiDataSource.getProductByLink(link);
+    } catch (e) {
+      throw ServerException(500, '链接转换失败: $e');
+    }
+  }
+
+  @override
+  Future<Product?> getRemoteProductDetail(String itemId) async {
+    try {
+      return await _apiDataSource.getProductDetail(itemId);
+    } catch (e) {
+      throw ServerException(500, '获取商品详情失败: $e');
+    }
+  }
+
+  @override
+  Future<void> saveProduct(Product product) async {
+    try {
+      final localProduct = ProductMapper.toLocal(product);
+      await _localDataSource.saveProduct(localProduct);
+    } catch (e) {
+      throw CacheException('保存商品失败: $e');
     }
   }
 }

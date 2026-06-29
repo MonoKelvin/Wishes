@@ -17,15 +17,6 @@ class CacheException implements Exception {
   String toString() => 'CacheException: $message';
 }
 
-class AuthException implements Exception {
-  final String message;
-
-  AuthException(this.message);
-
-  @override
-  String toString() => 'AuthException: $message';
-}
-
 class NetworkException implements Exception {
   final String message;
 

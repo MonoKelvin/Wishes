@@ -13,4 +13,11 @@ abstract class ProductRepository {
   Future<void> removeProductFromProject(String productId, String projectId);
   Future<void> moveProductToCategory(String productId, String categoryId);
   Future<List<Product>> getProductsByProject(String projectId);
+
+  // 远程API方法
+  Future<List<Product>> searchRemoteProducts(String keyword, {int page = 1, int pageSize = 20});
+  Future<List<Product>> getRemoteRecommendations({int page = 1, int pageSize = 20});
+  Future<Product?> convertLink(String link);
+  Future<Product?> getRemoteProductDetail(String itemId);
+  Future<void> saveProduct(Product product);
 }

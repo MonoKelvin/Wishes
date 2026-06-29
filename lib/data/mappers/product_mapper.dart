@@ -1,6 +1,5 @@
 import '../../domain/entities/product.dart';
 import '../datasources/local/database_models.dart';
-import '../datasources/remote/pdd_models.dart';
 
 class ProductMapper {
   // 本地模型转实体
@@ -16,6 +15,13 @@ class ProductMapper {
       projectIds: local.projectIds,
       categoryId: local.categoryId,
       syncedAt: local.syncedAt,
+      affiliateUrl: local.affiliateUrl,
+      couponUrl: local.couponUrl,
+      tkl: local.tkl,
+      commissionRate: local.commissionRate,
+      shopName: local.shopName,
+      salesCount: local.salesCount,
+      couponInfo: local.couponInfo,
     );
   }
 
@@ -32,44 +38,13 @@ class ProductMapper {
       projectIds: entity.projectIds,
       categoryId: entity.categoryId,
       syncedAt: entity.syncedAt,
-    );
-  }
-
-  // 拼多多商品转实体
-  static Product fromPddGoods(PddGoodsItem pddGoods) {
-    return Product(
-      id: pddGoods.goodsId,
-      name: pddGoods.goodsName,
-      thumbnailUrl: pddGoods.goodsThumbnailUrl,
-      imageUrls: [
-        pddGoods.goodsImageUrl,
-        ...pddGoods.goodsGalleryUrls,
-      ],
-      price: pddGoods.minGroupPrice,
-      originalPrice: null,
-      platform: 'pdd',
-      projectIds: [],
-      categoryId: null,
-      syncedAt: DateTime.now(),
-    );
-  }
-
-  // 拼多多商品详情转实体
-  static Product fromPddGoodsDetail(PddGoodsDetail pddDetail) {
-    return Product(
-      id: pddDetail.goodsId,
-      name: pddDetail.goodsName,
-      thumbnailUrl: pddDetail.goodsThumbnailUrl,
-      imageUrls: [
-        pddDetail.goodsImageUrl,
-        ...pddDetail.goodsGalleryUrls,
-      ],
-      price: pddDetail.minGroupPrice,
-      originalPrice: pddDetail.minNormalPrice,
-      platform: 'pdd',
-      projectIds: [],
-      categoryId: null,
-      syncedAt: DateTime.now(),
+      affiliateUrl: entity.affiliateUrl,
+      couponUrl: entity.couponUrl,
+      tkl: entity.tkl,
+      commissionRate: entity.commissionRate,
+      shopName: entity.shopName,
+      salesCount: entity.salesCount,
+      couponInfo: entity.couponInfo,
     );
   }
 }

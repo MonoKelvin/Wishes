@@ -17,6 +17,7 @@ import '../../home/providers/home_providers.dart';
 final productRepositoryProvider = Provider<ProductRepository>((ref) {
   return ProductRepositoryImpl(
     localDataSource: LocalDataSource(ref.watch(localStorageProvider)),
+    apiDataSource: ref.watch(platformApiProvider),
   );
 });
 
@@ -42,13 +43,16 @@ final searchProductsUseCaseProvider = Provider<SearchProductsUseCase>((ref) {
 });
 
 // Project Detail State
-final projectDetailProvider = FutureProvider.autoDispose.family<Project, String>((ref, projectId) async {
+final projectDetailProvider =
+    FutureProvider.autoDispose.family<Project, String>((ref, projectId) async {
   final projectRepository = ref.read(projectRepositoryProvider);
   return await projectRepository.getProject(projectId);
 });
 
 // Project Detail Actions
-final projectDetailActionsProvider = Provider.autoDispose.family<ProjectDetailActions, String>((ref, projectId) {
+final projectDetailActionsProvider =
+    Provider.autoDispose.family<ProjectDetailActions, String>(
+        (ref, projectId) {
   return ProjectDetailActions(ref, projectId);
 });
 
@@ -92,13 +96,15 @@ class ProjectDetailActions {
 }
 
 // Products in Project State
-final projectProductsProvider = FutureProvider.autoDispose.family<List<Product>, String>((ref, projectId) async {
+final projectProductsProvider = FutureProvider.autoDispose
+    .family<List<Product>, String>((ref, projectId) async {
   final productRepository = ref.read(productRepositoryProvider);
   return await productRepository.getProductsByProject(projectId);
 });
 
 // All Products State (for product selector)
-final allProductsProvider = AsyncNotifierProvider<AllProductsNotifier, List<Product>>(() {
+final allProductsProvider =
+    AsyncNotifierProvider<AllProductsNotifier, List<Product>>(() {
   return AllProductsNotifier();
 });
 
@@ -130,10 +136,47 @@ class AllProductsNotifier extends AsyncNotifier<List<Product>> {
       state = AsyncValue.error(e, stack);
     }
   }
+
+  Future<void> loadRecommendations({int page = 1}) async {
+    state = const AsyncValue.loading();
+    try {
+      final repo = ref.read(productRepositoryProvider);
+      final products = await repo.getRemoteRecommendations(page: page);
+      state = AsyncValue.data(products);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
+  }
 }
 
+// Remote Product Search (by link)
+final remoteSearchProvider = FutureProvider.autoDispose
+    .family<Product?, String>((ref, link) async {
+  final repo = ref.read(productRepositoryProvider);
+  return await repo.convertLink(link);
+});
+
+// Remote Keyword Search
+final remoteKeywordSearchProvider = FutureProvider.autoDispose
+    .family<List<Product>, Map<String, dynamic>>((ref, params) async {
+  final repo = ref.read(productRepositoryProvider);
+  return await repo.searchRemoteProducts(
+    params['keyword'] as String,
+    page: params['page'] as int? ?? 1,
+    pageSize: params['pageSize'] as int? ?? 20,
+  );
+});
+
+// Recommendations Provider
+final recommendationsProvider = FutureProvider.autoDispose
+    .family<List<Product>, int>((ref, page) async {
+  final repo = ref.read(productRepositoryProvider);
+  return await repo.getRemoteRecommendations(page: page);
+});
+
 // Selected Products State
-final selectedProductsProvider = NotifierProvider<SelectedProductsNotifier, Set<String>>(() {
+final selectedProductsProvider =
+    NotifierProvider<SelectedProductsNotifier, Set<String>>(() {
   return SelectedProductsNotifier();
 });
 

@@ -19,7 +19,7 @@ final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
 
 final syncRepositoryProvider = Provider<SyncRepository>((ref) {
   return SyncRepositoryImpl(
-    apiDataSource: ref.watch(pddApiDataSourceProvider),
+    apiDataSource: ref.watch(platformApiProvider),
     localDataSource: LocalDataSource(ref.watch(localStorageProvider)),
   );
 });
@@ -34,7 +34,8 @@ final syncProductsUseCaseProvider = Provider<SyncProductsUseCase>((ref) {
 });
 
 // Project List State
-final projectListProvider = AsyncNotifierProvider<ProjectListNotifier, List<Project>>(() {
+final projectListProvider =
+    AsyncNotifierProvider<ProjectListNotifier, List<Project>>(() {
   return ProjectListNotifier();
 });
 
@@ -58,7 +59,8 @@ class ProjectListNotifier extends AsyncNotifier<List<Project>> {
 }
 
 // Sync State
-final syncStateProvider = NotifierProvider<SyncNotifier, SyncState>(() {
+final syncStateProvider =
+    NotifierProvider<SyncNotifier, SyncState>(() {
   return SyncNotifier();
 });
 
@@ -107,7 +109,6 @@ class SyncNotifier extends Notifier<SyncState> {
         syncedCount: result.syncedCount,
       );
 
-      // 刷新项目列表
       ref.read(projectListProvider.notifier).refresh();
     } catch (e) {
       state = const SyncState(isSyncing: false, syncedCount: 0);

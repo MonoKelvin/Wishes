@@ -2,30 +2,20 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../network/dio_client.dart';
-import '../storage/secure_storage.dart';
 import '../storage/local_storage.dart';
-import '../config/api_config.dart';
-import '../../data/datasources/remote/pdd_api_datasource.dart';
+import '../../data/datasources/remote/platform_api.dart';
+import '../../data/datasources/remote/zhetaoke_taobao_datasource.dart';
 
 // 全局Provider
-final secureStorageProvider = Provider<SecureStorage>((ref) {
-  return SecureStorage();
-});
-
 final localStorageProvider = Provider<LocalStorage>((ref) {
   return LocalStorage();
 });
 
 final dioProvider = Provider<Dio>((ref) {
-  final secureStorage = ref.watch(secureStorageProvider);
-  return DioClient.create(secureStorage: secureStorage);
+  return DioClient.create();
 });
 
-// 拼多多API数据源Provider
-final pddApiDataSourceProvider = Provider<PddApiDataSource>((ref) {
-  return PddApiDataSource(
-    dio: ref.watch(dioProvider),
-    clientId: ApiConfig.pddClientId,
-    clientSecret: ApiConfig.pddClientSecret,
-  );
+// 平台API数据源（折淘客）
+final platformApiProvider = Provider<PlatformApiDataSource>((ref) {
+  return ZhetaokeTaobaoDataSource(dio: ref.read(dioProvider));
 });
