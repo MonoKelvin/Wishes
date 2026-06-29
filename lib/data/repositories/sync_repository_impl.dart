@@ -17,9 +17,6 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future<SyncResult> syncProducts() async {
     try {
-      final lastSyncTime = _localDataSource.getLastSyncTime();
-      final isFirstSync = lastSyncTime == null;
-
       int syncedCount = 0;
       int page = 1;
       bool hasMore = true;

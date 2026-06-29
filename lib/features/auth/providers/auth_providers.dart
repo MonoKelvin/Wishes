@@ -32,14 +32,27 @@ final authStateProvider = AsyncNotifierProvider<AuthNotifier, User?>(() {
 class AuthNotifier extends AsyncNotifier<User?> {
   @override
   Future<User?> build() async {
+    // 启动时检查已保存的登录状态
+    final authRepository = ref.read(authRepositoryProvider);
+    final isLoggedIn = await authRepository.isLoggedIn();
+    if (isLoggedIn) {
+      return await authRepository.getCurrentUser();
+    }
     return null;
   }
 
-  Future<void> login() async {
+  /// 获取授权URL
+  String getAuthorizationUrl() {
+    final loginUseCase = ref.read(loginUseCaseProvider);
+    return loginUseCase.getAuthorizationUrl();
+  }
+
+  /// 用授权码登录
+  Future<void> loginWithCode(String authorizationCode) async {
     state = const AsyncValue.loading();
     try {
       final loginUseCase = ref.read(loginUseCaseProvider);
-      final user = await loginUseCase();
+      final user = await loginUseCase(authorizationCode);
       state = AsyncValue.data(user);
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
@@ -52,22 +65,6 @@ class AuthNotifier extends AsyncNotifier<User?> {
       final authRepository = ref.read(authRepositoryProvider);
       await authRepository.logout();
       state = const AsyncValue.data(null);
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
-
-  Future<void> checkAuth() async {
-    state = const AsyncValue.loading();
-    try {
-      final authRepository = ref.read(authRepositoryProvider);
-      final isLoggedIn = await authRepository.isLoggedIn();
-      if (isLoggedIn) {
-        final user = await authRepository.getCurrentUser();
-        state = AsyncValue.data(user);
-      } else {
-        state = const AsyncValue.data(null);
-      }
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
     }

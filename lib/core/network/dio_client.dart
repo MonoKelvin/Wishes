@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 
 import '../constants/api_constants.dart';
+import '../storage/secure_storage.dart';
 import 'interceptors.dart';
 
 class DioClient {
-  static Dio create() {
+  static Dio create({required SecureStorage secureStorage}) {
     final dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.pddBaseUrl,
@@ -19,7 +20,7 @@ class DioClient {
     );
 
     dio.interceptors.addAll([
-      AuthInterceptor(),
+      AuthInterceptor(secureStorage: secureStorage),
       LogInterceptor(
         request: true,
         requestHeader: true,

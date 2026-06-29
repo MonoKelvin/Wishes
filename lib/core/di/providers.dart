@@ -8,16 +8,17 @@ import '../config/api_config.dart';
 import '../../data/datasources/remote/pdd_api_datasource.dart';
 
 // 全局Provider
-final dioProvider = Provider<Dio>((ref) {
-  return DioClient.create();
-});
-
 final secureStorageProvider = Provider<SecureStorage>((ref) {
   return SecureStorage();
 });
 
 final localStorageProvider = Provider<LocalStorage>((ref) {
   return LocalStorage();
+});
+
+final dioProvider = Provider<Dio>((ref) {
+  final secureStorage = ref.watch(secureStorageProvider);
+  return DioClient.create(secureStorage: secureStorage);
 });
 
 // 拼多多API数据源Provider

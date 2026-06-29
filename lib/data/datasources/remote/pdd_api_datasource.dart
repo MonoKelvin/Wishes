@@ -3,6 +3,7 @@ import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
 import '../../../core/constants/api_constants.dart';
+import '../../../core/config/api_config.dart';
 import '../../../core/error/exceptions.dart';
 import 'pdd_models.dart';
 
@@ -113,6 +114,67 @@ class PddApiDataSource {
           );
         }
         return PddGoodsDetailResponse.fromJson(data);
+      } else {
+        throw ServerException(response.statusCode!, '请求失败');
+      }
+    } on DioException catch (e) {
+      throw NetworkException(e.message ?? '网络错误');
+    }
+  }
+
+  // 用授权码换取access_token
+  Future<PddTokenResponse> exchangeToken(String authorizationCode) async {
+    try {
+      final params = _buildParams(ApiConstants.tokenExchange, {
+        ApiConstants.codeKey: authorizationCode,
+        ApiConstants.redirectUriKey: ApiConfig.pddRedirectUri,
+        ApiConstants.grantTypeKey: 'authorization_code',
+      });
+
+      final response = await _dio.post(
+        ApiConstants.pddBaseUrl,
+        data: params,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        if (data.containsKey('error_response')) {
+          throw ServerException(
+            data['error_response']['error_code'] ?? 500,
+            data['error_response']['error_msg'] ?? 'Unknown error',
+          );
+        }
+        return PddTokenResponse.fromJson(data);
+      } else {
+        throw ServerException(response.statusCode!, '请求失败');
+      }
+    } on DioException catch (e) {
+      throw NetworkException(e.message ?? '网络错误');
+    }
+  }
+
+  // 刷新access_token
+  Future<PddTokenResponse> refreshAccessToken(String refreshToken) async {
+    try {
+      final params = _buildParams(ApiConstants.tokenRefresh, {
+        ApiConstants.refreshTokenKey: refreshToken,
+        ApiConstants.grantTypeKey: 'refresh_token',
+      });
+
+      final response = await _dio.post(
+        ApiConstants.pddBaseUrl,
+        data: params,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        if (data.containsKey('error_response')) {
+          throw ServerException(
+            data['error_response']['error_code'] ?? 500,
+            data['error_response']['error_msg'] ?? 'Unknown error',
+          );
+        }
+        return PddTokenResponse.fromJson(data);
       } else {
         throw ServerException(response.statusCode!, '请求失败');
       }

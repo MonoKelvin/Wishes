@@ -16,7 +16,7 @@ class LoginButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 56,
+      height: 52,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -25,7 +25,7 @@ class LoginButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           ),
-          elevation: 2,
+          elevation: 0,
         ),
         child: isLoading
             ? const SizedBox(
@@ -39,18 +39,17 @@ class LoginButton extends StatelessWidget {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 拼多多图标（这里用购物车图标代替）
                   const Icon(
-                    Icons.shopping_cart,
-                    size: 24,
+                    Icons.shopping_bag_outlined,
+                    size: 22,
                   ),
                   const SizedBox(width: AppTheme.spacingS),
                   Text(
                     '拼多多授权登录',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                 ],
               ),

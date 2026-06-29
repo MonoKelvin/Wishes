@@ -40,9 +40,7 @@ class SyncProgressIndicator extends ConsumerWidget {
                     children: [
                       Text(
                         '正在同步商品...',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       if (syncState.totalCount > 0)
                         Text(
@@ -58,7 +56,7 @@ class SyncProgressIndicator extends ConsumerWidget {
               const SizedBox(height: AppTheme.spacingS),
               LinearProgressIndicator(
                 value: syncState.progress,
-                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                backgroundColor: AppTheme.primarySubtleColor,
                 valueColor:
                     const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
@@ -76,7 +74,7 @@ class SyncProgressIndicator extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     syncState.errorMessage!,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppTheme.errorColor,
                       fontSize: 14,
                     ),

@@ -29,9 +29,7 @@ class ProductCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
       ),
       child: InkWell(
-        onTap: () {
-          context.push('/product/${product.id}');
-        },
+        onTap: () => context.push('/product/${product.id}'),
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         child: Padding(
           padding: const EdgeInsets.all(AppTheme.spacingS),
@@ -56,7 +54,7 @@ class ProductCard extends StatelessWidget {
                   placeholder: (context, url) => Container(
                     width: 80,
                     height: 80,
-                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    color: AppTheme.primarySubtleColor,
                     child: const Center(
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
@@ -64,7 +62,7 @@ class ProductCard extends StatelessWidget {
                   errorWidget: (context, url, error) => Container(
                     width: 80,
                     height: 80,
-                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    color: AppTheme.primarySubtleColor,
                     child: const Icon(
                       Icons.image_not_supported,
                       color: AppTheme.textHintColor,
@@ -95,10 +93,9 @@ class ProductCard extends StatelessWidget {
                           product.price.priceString,
                           style: Theme.of(context)
                               .textTheme
-                              .bodyLarge
+                              .titleMedium
                               ?.copyWith(
                                 color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.w600,
                               ),
                         ),
                         if (product.originalPrice != null) ...[
@@ -128,12 +125,12 @@ class ProductCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryLightColor.withOpacity(0.2),
+                              color: AppTheme.primarySubtleColor,
                               borderRadius:
                                   BorderRadius.circular(AppTheme.radiusSmall),
                             ),
-                            child: Text(
-                              '项目', // TODO: 显示项目名称
+                            child: const Text(
+                              '已选',
                               style: TextStyle(
                                 color: AppTheme.primaryColor,
                                 fontSize: 10,
@@ -150,10 +147,10 @@ class ProductCard extends StatelessWidget {
               if (onTogglePurchase != null)
                 IconButton(
                   icon: Icon(
-                    product.projectIds.isNotEmpty
+                    isSelected
                         ? Icons.check_circle
                         : Icons.radio_button_unchecked,
-                    color: product.projectIds.isNotEmpty
+                    color: isSelected
                         ? AppTheme.successColor
                         : AppTheme.textHintColor,
                   ),

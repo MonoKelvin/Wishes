@@ -20,6 +20,9 @@ dependencies:
   # 网络请求
   dio: ^5.7.0
 
+  # WebView (用于OAuth授权页面)
+  webview_flutter: ^4.10.0
+
   # 本地存储
   hive: ^2.2.3
   hive_flutter: ^1.1.0

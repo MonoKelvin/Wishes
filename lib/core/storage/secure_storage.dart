@@ -32,8 +32,39 @@ class SecureStorage {
     return await _storage.read(key: AppConstants.userIdKey);
   }
 
+  // Token过期时间管理
+  Future<void> saveTokenExpiry(DateTime expiry) async {
+    await _storage.write(
+      key: AppConstants.tokenExpiryKey,
+      value: expiry.toIso8601String(),
+    );
+  }
+
+  Future<DateTime?> getTokenExpiry() async {
+    final value = await _storage.read(key: AppConstants.tokenExpiryKey);
+    if (value != null) {
+      return DateTime.tryParse(value);
+    }
+    return null;
+  }
+
+  // 用户信息缓存
+  Future<void> saveUserInfo(String userInfoJson) async {
+    await _storage.write(key: AppConstants.userInfoKey, value: userInfoJson);
+  }
+
+  Future<String?> getUserInfo() async {
+    return await _storage.read(key: AppConstants.userInfoKey);
+  }
+
   Future<void> clearAll() async {
     await _storage.deleteAll();
+  }
+
+  Future<void> clearTokens() async {
+    await _storage.delete(key: AppConstants.tokenKey);
+    await _storage.delete(key: AppConstants.refreshTokenKey);
+    await _storage.delete(key: AppConstants.tokenExpiryKey);
   }
 
   Future<bool> hasToken() async {

@@ -1,3 +1,28 @@
+// OAuth Token 响应
+class PddTokenResponse {
+  final String accessToken;
+  final String refreshToken;
+  final int expiresIn;
+  final String? tokenType;
+
+  const PddTokenResponse({
+    required this.accessToken,
+    required this.refreshToken,
+    required this.expiresIn,
+    this.tokenType,
+  });
+
+  factory PddTokenResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['pop_auth_token_response'] ?? json;
+    return PddTokenResponse(
+      accessToken: data['access_token'] as String,
+      refreshToken: data['refresh_token'] as String,
+      expiresIn: data['expires_in'] as int,
+      tokenType: data['token_type'] as String?,
+    );
+  }
+}
+
 class PddGoodsSearchResponse {
   final int total;
   final List<PddGoodsItem> goodsList;

@@ -6,4 +6,8 @@ class ApiConfig {
   // API基础URL
   static const String pddBaseUrl = 'https://open-api.pinduoduo.com/api/router';
   static const String pddAuthUrl = 'https://mms.pinduoduo.com/open.html';
+
+  // OAuth配置
+  static const String pddRedirectUri = 'https://open.pinduoduo.com/oauth/callback';
+  static const String pddScope = 'basic';
 }

@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'package:uuid/uuid.dart';
+
+import '../../core/config/api_config.dart';
 import '../../core/error/exceptions.dart';
 import '../../core/storage/secure_storage.dart';
 import '../../domain/entities/user.dart';
@@ -15,87 +20,124 @@ class AuthRepositoryImpl implements AuthRepository {
         _secureStorage = secureStorage;
 
   @override
-  Future<User> login() async {
-    try {
-      // TODO: 实现拼多多OAuth2.0授权流程
-      // 1. 打开拼多多授权页面
-      // 2. 获取authorization_code
-      // 3. 用code换取access_token
-      // 4. 获取用户信息
+  String getAuthorizationUrl() {
+    final state = const Uuid().v4();
+    final params = Uri(queryParameters: {
+      'client_id': ApiConfig.pddClientId,
+      'response_type': 'code',
+      'redirect_uri': ApiConfig.pddRedirectUri,
+      'state': state,
+    }).query;
+    return '${ApiConfig.pddAuthUrl}?$params';
+  }
 
-      // 临时返回模拟用户
+  @override
+  Future<User> loginWithCode(String authorizationCode) async {
+    try {
+      // 1. 用授权码换取token
+      final tokenResponse = await _apiDataSource.exchangeToken(authorizationCode);
+
+      // 2. 保存token
+      await _secureStorage.saveToken(tokenResponse.accessToken);
+      await _secureStorage.saveRefreshToken(tokenResponse.refreshToken);
+
+      // 3. 计算并保存token过期时间
+      final expiry = DateTime.now().add(Duration(seconds: tokenResponse.expiresIn));
+      await _secureStorage.saveTokenExpiry(expiry);
+
+      // 4. 创建用户对象（拼多多API不提供用户信息接口，使用默认信息）
       final user = User(
-        id: 'temp_user_id',
-        nickname: '测试用户',
+        id: tokenResponse.accessToken.hashCode.toString(),
+        nickname: '拼多多用户',
         avatarUrl: '',
         createdAt: DateTime.now(),
       );
 
+      // 5. 保存用户信息
       await _secureStorage.saveUserId(user.id);
+      await _secureStorage.saveUserInfo(jsonEncode(user.toJson()));
+
       return user;
     } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
       throw AuthException('登录失败: $e');
     }
   }
 
   @override
   Future<void> logout() async {
-    try {
-      await _secureStorage.clearAll();
-    } catch (e) {
-      throw AuthException('登出失败: $e');
-    }
+    await _secureStorage.clearAll();
   }
 
   @override
   Future<String> getAccessToken() async {
-    try {
-      final token = await _secureStorage.getToken();
-      if (token == null) {
-        throw AuthException('未登录');
-      }
-      return token;
-    } catch (e) {
-      throw AuthException('获取令牌失败: $e');
+    final token = await _secureStorage.getToken();
+    if (token == null || token.isEmpty) {
+      throw AuthException('未登录');
     }
+
+    // 检查token是否即将过期
+    final expiry = await _secureStorage.getTokenExpiry();
+    if (expiry != null && DateTime.now().isAfter(expiry.subtract(const Duration(minutes: 5)))) {
+      // Token即将过期，刷新
+      return await refreshToken();
+    }
+
+    return token;
   }
 
   @override
   Future<String> refreshToken() async {
+    final refreshToken = await _secureStorage.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw AuthException('刷新令牌不存在，请重新登录');
+    }
+
     try {
-      final refreshToken = await _secureStorage.getRefreshToken();
-      if (refreshToken == null) {
-        throw AuthException('刷新令牌不存在');
-      }
+      final tokenResponse = await _apiDataSource.refreshAccessToken(refreshToken);
 
-      // TODO: 实现令牌刷新逻辑
-      // 调用拼多多API刷新令牌
+      // 保存新token
+      await _secureStorage.saveToken(tokenResponse.accessToken);
+      await _secureStorage.saveRefreshToken(tokenResponse.refreshToken);
 
-      return 'new_token';
+      // 更新过期时间
+      final expiry = DateTime.now().add(Duration(seconds: tokenResponse.expiresIn));
+      await _secureStorage.saveTokenExpiry(expiry);
+
+      return tokenResponse.accessToken;
     } catch (e) {
-      throw AuthException('刷新令牌失败: $e');
+      // 刷新失败，清除所有token
+      await _secureStorage.clearTokens();
+      throw AuthException('Token刷新失败，请重新登录');
     }
   }
 
   @override
   Future<bool> isLoggedIn() async {
-    try {
-      return await _secureStorage.hasToken();
-    } catch (e) {
-      return false;
-    }
+    final token = await _secureStorage.getToken();
+    return token != null && token.isNotEmpty;
   }
 
   @override
   Future<User?> getCurrentUser() async {
     try {
-      final userId = await _secureStorage.getUserId();
-      if (userId == null) return null;
+      // 先从缓存读取
+      final userInfoJson = await _secureStorage.getUserInfo();
+      if (userInfoJson != null) {
+        return User.fromJson(jsonDecode(userInfoJson));
+      }
 
-      // TODO: 从本地存储或API获取用户信息
+      // 缓存不存在，检查是否有token
+      final isLoggedIn = await this.isLoggedIn();
+      if (!isLoggedIn) return null;
+
+      // 有token但没有用户信息，返回默认用户
+      final userId = await _secureStorage.getUserId();
       return User(
-        id: userId,
-        nickname: '用户',
+        id: userId ?? 'unknown',
+        nickname: '拼多多用户',
         avatarUrl: '',
         createdAt: DateTime.now(),
       );

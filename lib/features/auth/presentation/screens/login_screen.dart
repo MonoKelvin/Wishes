@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme.dart';
 import '../../providers/auth_providers.dart';
 import '../widgets/login_button.dart';
+import 'oauth_webview_screen.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -29,7 +30,7 @@ class LoginScreen extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppTheme.primaryColor.withOpacity(0.1),
+              AppTheme.primaryColor.withValues(alpha: 0.1),
               AppTheme.backgroundColor,
             ],
           ),
@@ -43,16 +44,20 @@ class LoginScreen extends ConsumerWidget {
                 children: [
                   // Logo
                   Container(
-                    width: 120,
-                    height: 120,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.primaryColor, AppTheme.primaryLightColor],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                       boxShadow: AppTheme.mediumShadow,
                     ),
                     child: const Icon(
                       Icons.favorite,
-                      size: 60,
+                      size: 50,
                       color: Colors.white,
                     ),
                   ),
@@ -80,9 +85,7 @@ class LoginScreen extends ConsumerWidget {
                   // 登录按钮
                   authState.when(
                     data: (user) => LoginButton(
-                      onPressed: () {
-                        ref.read(authStateProvider.notifier).login();
-                      },
+                      onPressed: () => _startOAuth(context, ref),
                       isLoading: false,
                     ),
                     loading: () => const LoginButton(
@@ -92,21 +95,49 @@ class LoginScreen extends ConsumerWidget {
                     error: (error, stack) => Column(
                       children: [
                         LoginButton(
-                          onPressed: () {
-                            ref.read(authStateProvider.notifier).login();
-                          },
+                          onPressed: () => _startOAuth(context, ref),
                           isLoading: false,
                         ),
                         const SizedBox(height: AppTheme.spacingM),
-                        Text(
-                          '登录失败，请重试',
-                          style: TextStyle(
-                            color: AppTheme.errorColor,
-                            fontSize: 14,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingM,
+                            vertical: AppTheme.spacingS,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.errorColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 16,
+                                color: AppTheme.errorColor,
+                              ),
+                              const SizedBox(width: AppTheme.spacingXS),
+                              Flexible(
+                                child: Text(
+                                  '登录失败，请重试',
+                                  style: TextStyle(
+                                    color: AppTheme.errorColor,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingL),
+
+                  // 提示文字
+                  Text(
+                    '登录即表示同意《用户协议》和《隐私政策》',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
@@ -115,5 +146,23 @@ class LoginScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _startOAuth(BuildContext context, WidgetRef ref) async {
+    final authNotifier = ref.read(authStateProvider.notifier);
+    final authUrl = authNotifier.getAuthorizationUrl();
+
+    // 打开WebView进行授权
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OAuthWebViewScreen(authorizationUrl: authUrl),
+      ),
+    );
+
+    // 如果获取到授权码，完成登录
+    if (result != null && result.isNotEmpty) {
+      await authNotifier.loginWithCode(result);
+    }
   }
 }

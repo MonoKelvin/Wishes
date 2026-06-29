@@ -32,7 +32,7 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
     if (widget.imageUrls.isEmpty) {
       return Container(
         height: widget.height,
-        color: AppTheme.primaryColor.withOpacity(0.1),
+        color: AppTheme.primarySubtleColor,
         child: const Center(
           child: Icon(
             Icons.image_not_supported,
@@ -63,13 +63,13 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
                 height: widget.height,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: AppTheme.primarySubtleColor,
                   child: const Center(
                     child: CircularProgressIndicator(),
                   ),
                 ),
                 errorWidget: (context, url, error) => Container(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: AppTheme.primarySubtleColor,
                   child: const Center(
                     child: Icon(
                       Icons.image_not_supported,
@@ -100,7 +100,7 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
                     shape: BoxShape.circle,
                     color: _currentIndex == index
                         ? AppTheme.primaryColor
-                        : AppTheme.primaryColor.withOpacity(0.3),
+                        : AppTheme.primaryMutedColor,
                   ),
                 ),
               ),
@@ -118,7 +118,7 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
                 vertical: 4,
               ),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
+                color: AppTheme.overlayDarkColor,
                 borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
               ),
               child: Text(
@@ -134,3 +134,5 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
     );
   }
 }
+
+// 需要在theme.dart中添加 overlayDarkColor

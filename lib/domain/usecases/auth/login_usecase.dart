@@ -6,7 +6,13 @@ class LoginUseCase {
 
   LoginUseCase(this._repository);
 
-  Future<User> call() async {
-    return await _repository.login();
+  /// 获取授权URL
+  String getAuthorizationUrl() {
+    return _repository.getAuthorizationUrl();
+  }
+
+  /// 用授权码完成登录
+  Future<User> call(String authorizationCode) async {
+    return await _repository.loginWithCode(authorizationCode);
   }
 }

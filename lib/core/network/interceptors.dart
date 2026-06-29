@@ -1,17 +1,21 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../storage/secure_storage.dart';
-import '../constants/app_constants.dart';
+import '../error/exceptions.dart';
 
 class AuthInterceptor extends Interceptor {
-  final SecureStorage _secureStorage = SecureStorage();
+  final SecureStorage _secureStorage;
+  bool _isRefreshing = false;
+  final List<RequestOptions> _pendingRequests = [];
+
+  AuthInterceptor({required SecureStorage secureStorage})
+      : _secureStorage = secureStorage;
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     // 添加访问令牌到请求头
     final token = await _secureStorage.getToken();
-    if (token != null) {
+    if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
     handler.next(options);
@@ -20,24 +24,46 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
-      // 尝试刷新令牌
-      try {
-        final refreshToken = await _secureStorage.getRefreshToken();
-        if (refreshToken != null) {
-          // TODO: 实现令牌刷新逻辑
-          // final newToken = await _refreshToken(refreshToken);
-          // await _secureStorage.saveToken(newToken);
-          // 重试原始请求
-          // final response = await _retryRequest(err.requestOptions);
-          // handler.resolve(response);
-          // return;
-        }
-      } catch (e) {
-        // 刷新失败，清除令牌并跳转到登录页
-        await _secureStorage.clearAll();
+      // 如果正在刷新token，将请求加入待处理队列
+      if (_isRefreshing) {
+        _pendingRequests.add(err.requestOptions);
+        return;
       }
+
+      _isRefreshing = true;
+
+      try {
+        // 尝试刷新token
+        final refreshToken = await _secureStorage.getRefreshToken();
+        if (refreshToken == null || refreshToken.isEmpty) {
+          throw AuthException('刷新令牌不存在');
+        }
+
+        // 这里不能直接调用AuthRepository，因为会产生循环依赖
+        // 实际的token刷新逻辑需要在Provider层处理
+        // 这里先清除token，让应用跳转到登录页
+        await _secureStorage.clearTokens();
+
+        handler.reject(DioException(
+          requestOptions: err.requestOptions,
+          error: AuthException('Token已过期，请重新登录'),
+          type: DioExceptionType.badResponse,
+        ));
+      } catch (e) {
+        await _secureStorage.clearTokens();
+        handler.reject(DioException(
+          requestOptions: err.requestOptions,
+          error: AuthException('认证失败，请重新登录'),
+          type: DioExceptionType.badResponse,
+        ));
+      } finally {
+        _isRefreshing = false;
+        // 清空待处理队列
+        _pendingRequests.clear();
+      }
+    } else {
+      handler.next(err);
     }
-    handler.next(err);
   }
 
   @override

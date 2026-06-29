@@ -25,9 +25,7 @@ class ProjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
       ),
       child: InkWell(
-        onTap: () {
-          context.push('/project/${project.id}');
-        },
+        onTap: () => context.push('/project/${project.id}'),
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         child: Padding(
           padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -37,23 +35,20 @@ class ProjectCard extends StatelessWidget {
               // 顶部行：项目名称和状态
               Row(
                 children: [
-                  // 项目名称
                   Expanded(
                     child: Text(
                       project.name,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.titleLarge,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  // 置顶图标
                   if (project.isPinned)
-                    Icon(
+                    const Icon(
                       Icons.push_pin,
                       size: 16,
                       color: AppTheme.primaryColor,
                     ),
-                  // 完成状态
                   if (project.isCompleted)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -61,10 +56,10 @@ class ProjectCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.successColor.withOpacity(0.1),
+                        color: AppTheme.successSubtleColor,
                         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                       ),
-                      child: Text(
+                      child: const Text(
                         '已完成',
                         style: TextStyle(
                           color: AppTheme.successColor,
@@ -83,12 +78,12 @@ class ProjectCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLightColor.withOpacity(0.2),
+                  color: AppTheme.primarySubtleColor,
                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                 ),
                 child: Text(
                   project.scene,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppTheme.primaryColor,
                     fontSize: 12,
                   ),
@@ -99,8 +94,8 @@ class ProjectCard extends StatelessWidget {
               // 进度条
               if (project.productCount > 0) ...[
                 LinearProgressIndicator(
-                  value: project.isCompleted ? 1.0 : 0.0, // TODO: 计算实际进度
-                  backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                  value: project.isCompleted ? 1.0 : 0.0,
+                  backgroundColor: AppTheme.primarySubtleColor,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     project.isCompleted
                         ? AppTheme.successColor
@@ -113,8 +108,7 @@ class ProjectCard extends StatelessWidget {
               // 底部信息行
               Row(
                 children: [
-                  // 商品数量
-                  Icon(
+                  const Icon(
                     Icons.shopping_bag_outlined,
                     size: 16,
                     color: AppTheme.textSecondaryColor,
@@ -125,12 +119,10 @@ class ProjectCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const Spacer(),
-                  // 总价
                   Text(
                     project.totalPrice.priceString,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.w600,
                         ),
                   ),
                 ],

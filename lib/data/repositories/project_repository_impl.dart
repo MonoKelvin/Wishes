@@ -1,6 +1,5 @@
 import '../../core/error/exceptions.dart';
 import '../../domain/entities/project.dart';
-import '../../domain/entities/category.dart';
 import '../../domain/repositories/project_repository.dart';
 import '../datasources/local/local_datasource.dart';
 import '../mappers/project_mapper.dart';

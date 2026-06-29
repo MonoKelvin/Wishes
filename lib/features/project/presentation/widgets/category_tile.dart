@@ -23,21 +23,6 @@ class CategoryTile extends StatelessWidget {
         label: Text(category.name),
         selected: isSelected,
         onSelected: onTap != null ? (_) => onTap!() : null,
-        backgroundColor: AppTheme.surfaceColor,
-        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
-        checkmarkColor: AppTheme.primaryColor,
-        labelStyle: TextStyle(
-          color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimaryColor,
-          fontSize: 14,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-          side: BorderSide(
-            color: isSelected
-                ? AppTheme.primaryColor
-                : AppTheme.textHintColor.withOpacity(0.3),
-          ),
-        ),
       ),
     );
   }

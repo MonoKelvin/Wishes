@@ -4,9 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/error_state.dart';
 import '../../providers/project_providers.dart';
 import '../widgets/product_card.dart';
-import '../widgets/category_tile.dart';
 
 class ProjectDetailScreen extends ConsumerWidget {
   final String projectId;
@@ -20,6 +21,7 @@ class ProjectDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final projectState = ref.watch(projectDetailProvider(projectId));
     final productsState = ref.watch(projectProductsProvider(projectId));
+    final actions = ref.watch(projectDetailActionsProvider(projectId));
 
     return Scaffold(
       appBar: AppBar(
@@ -33,11 +35,9 @@ class ProjectDetailScreen extends ConsumerWidget {
           error: (_, __) => const Text('项目详情'),
         ),
         actions: [
-          // 更多菜单
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) async {
-              final actions = ref.read(projectDetailActionsProvider(projectId));
               switch (value) {
                 case 'pin':
                   actions.togglePin();
@@ -46,55 +46,51 @@ class ProjectDetailScreen extends ConsumerWidget {
                   actions.markComplete();
                   break;
                 case 'delete':
-                  _showDeleteDialog(context, ref);
+                  _showDeleteDialog(context, ref, actions);
                   break;
               }
             },
-            itemBuilder: (context) => [
-              projectState.when(
-                data: (project) => PopupMenuItem(
+            itemBuilder: (context) {
+              final project = projectState.asData?.value;
+              return [
+                PopupMenuItem(
                   value: 'pin',
                   child: Row(
                     children: [
                       Icon(
-                        project.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                        project?.isPinned == true
+                            ? Icons.push_pin
+                            : Icons.push_pin_outlined,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(project.isPinned ? '取消置顶' : '置顶'),
+                      Text(project?.isPinned == true ? '取消置顶' : '置顶'),
                     ],
                   ),
                 ),
-                loading: () => const PopupMenuItem(value: '', child: SizedBox()),
-                error: (_, __) => const PopupMenuItem(value: '', child: SizedBox()),
-              ),
-              projectState.when(
-                data: (project) => project.isCompleted
-                    ? const PopupMenuItem(value: '', child: SizedBox())
-                    : PopupMenuItem(
-                        value: 'complete',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check_circle_outline, size: 20),
-                            const SizedBox(width: 8),
-                            const Text('标记完成'),
-                          ],
-                        ),
-                      ),
-                loading: () => const PopupMenuItem(value: '', child: SizedBox()),
-                error: (_, __) => const PopupMenuItem(value: '', child: SizedBox()),
-              ),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_outline, size: 20, color: AppTheme.errorColor),
-                    SizedBox(width: 8),
-                    Text('删除', style: TextStyle(color: AppTheme.errorColor)),
-                  ],
+                if (project?.isCompleted != true)
+                  PopupMenuItem(
+                    value: 'complete',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline, size: 20),
+                        const SizedBox(width: 8),
+                        const Text('标记完成'),
+                      ],
+                    ),
+                  ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 20, color: AppTheme.errorColor),
+                      SizedBox(width: 8),
+                      Text('删除', style: TextStyle(color: AppTheme.errorColor)),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ];
+            },
           ),
         ],
       ),
@@ -119,6 +115,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                     '总价',
                     project.totalPrice.priceString,
                     Icons.attach_money,
+                    color: AppTheme.primaryColor,
                   ),
                   _buildStatItem(
                     context,
@@ -136,74 +133,44 @@ class ProjectDetailScreen extends ConsumerWidget {
             ),
             const Divider(height: 1),
 
-            // 分类列表
-            if (project.categories.isNotEmpty)
-              SizedBox(
-                height: 60,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacingM,
-                    vertical: AppTheme.spacingS,
-                  ),
-                  itemCount: project.categories.length,
-                  itemBuilder: (context, index) {
-                    return CategoryTile(category: project.categories[index]);
-                  },
-                ),
-              ),
-
             // 商品列表
             Expanded(
               child: productsState.when(
                 data: (products) => products.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.shopping_bag_outlined,
-                              size: 60,
-                              color: AppTheme.textHintColor,
-                            ),
-                            const SizedBox(height: AppTheme.spacingM),
-                            Text(
-                              '还没有商品',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(
-                                    color: AppTheme.textSecondaryColor,
-                                  ),
-                            ),
-                            const SizedBox(height: AppTheme.spacingS),
-                            ElevatedButton(
-                              onPressed: () {
-                                // TODO: 打开商品选择器
-                              },
-                              child: const Text('添加商品'),
-                            ),
-                          ],
+                    ? EmptyState(
+                        icon: Icons.shopping_bag_outlined,
+                        title: '还没有商品',
+                        action: ElevatedButton(
+                          onPressed: () {
+                            // TODO: 打开商品选择器
+                          },
+                          child: const Text('添加商品'),
                         ),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(AppTheme.spacingM),
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          return ProductCard(
-                            product: products[index],
-                            onTogglePurchase: () {
-                              // TODO: 实现已购/未购切换
-                              ref.invalidate(projectProductsProvider(projectId));
-                            },
-                          );
+                    : RefreshIndicator(
+                        onRefresh: () async {
+                          ref.invalidate(projectProductsProvider(projectId));
                         },
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(AppTheme.spacingM),
+                          itemCount: products.length,
+                          itemBuilder: (context, index) {
+                            return ProductCard(
+                              product: products[index],
+                              onTogglePurchase: () {
+                                ref.invalidate(projectProductsProvider(projectId));
+                              },
+                            );
+                          },
+                        ),
                       ),
                 loading: () => const Center(
                   child: CircularProgressIndicator(),
                 ),
-                error: (error, stack) => Center(
-                  child: Text('加载失败: $error'),
+                error: (error, stack) => ErrorState(
+                  message: '加载失败',
+                  onRetry: () =>
+                      ref.invalidate(projectProductsProvider(projectId)),
                 ),
               ),
             ),
@@ -212,8 +179,9 @@ class ProjectDetailScreen extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
-        error: (error, stack) => Center(
-          child: Text('加载失败: $error'),
+        error: (error, stack) => ErrorState(
+          message: '加载失败',
+          onRetry: () => ref.invalidate(projectDetailProvider(projectId)),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -242,8 +210,7 @@ class ProjectDetailScreen extends ConsumerWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: color ?? AppTheme.textPrimaryColor,
               ),
         ),
@@ -255,7 +222,11 @@ class ProjectDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, WidgetRef ref) {
+  void _showDeleteDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ProjectDetailActions actions,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -263,14 +234,13 @@ class ProjectDetailScreen extends ConsumerWidget {
         content: const Text('确定要删除这个项目吗？此操作不可撤销。'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text('取消'),
           ),
           TextButton(
             onPressed: () {
-              final actions = ref.read(projectDetailActionsProvider(projectId));
               actions.delete();
-              Navigator.pop(context);
+              context.pop();
               context.pop();
             },
             style: TextButton.styleFrom(

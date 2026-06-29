@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/theme.dart';
 import '../../../../core/utils/extensions.dart';
+import '../../../../shared/widgets/error_state.dart';
 import '../../providers/product_providers.dart';
 import '../widgets/product_image_carousel.dart';
 
@@ -68,7 +69,8 @@ class ProductDetailScreen extends ConsumerWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
-                        if (product.originalPrice != null) ...[
+                        if (product.originalPrice != null &&
+                            product.originalPrice! > 0) ...[
                           const SizedBox(width: AppTheme.spacingS),
                           Text(
                             product.originalPrice!.priceString,
@@ -87,13 +89,13 @@ class ProductDetailScreen extends ConsumerWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.errorColor.withOpacity(0.1),
+                              color: AppTheme.errorSubtleColor,
                               borderRadius:
                                   BorderRadius.circular(AppTheme.radiusSmall),
                             ),
                             child: Text(
                               '${((1 - product.price / product.originalPrice!) * 100).toStringAsFixed(0)}% OFF',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppTheme.errorColor,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -105,43 +107,11 @@ class ProductDetailScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppTheme.spacingM),
 
-                    // 所属项目
-                    if (product.projectIds.isNotEmpty) ...[
-                      Text(
-                        '所属项目',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                      ),
-                      const SizedBox(height: AppTheme.spacingS),
-                      Wrap(
-                        spacing: AppTheme.spacingXS,
-                        children: product.projectIds.map((projectId) {
-                          return Chip(
-                            label: Text('项目'), // TODO: 显示项目名称
-                            backgroundColor:
-                                AppTheme.primaryLightColor.withOpacity(0.2),
-                            labelStyle: TextStyle(
-                              color: AppTheme.primaryColor,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppTheme.radiusSmall),
-                              side: BorderSide.none,
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: AppTheme.spacingM),
-                    ],
-
                     // 商品详情图片
                     if (product.imageUrls.length > 1) ...[
                       Text(
                         '商品详情',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: AppTheme.spacingS),
                       ...product.imageUrls.skip(1).map((url) {
@@ -157,14 +127,14 @@ class ProductDetailScreen extends ConsumerWidget {
                               fit: BoxFit.cover,
                               placeholder: (context, url) => Container(
                                 height: 200,
-                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                color: AppTheme.primarySubtleColor,
                                 child: const Center(
                                   child: CircularProgressIndicator(),
                                 ),
                               ),
                               errorWidget: (context, url, error) => Container(
                                 height: 200,
-                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                color: AppTheme.primarySubtleColor,
                                 child: const Icon(
                                   Icons.image_not_supported,
                                   color: AppTheme.textHintColor,
@@ -184,8 +154,9 @@ class ProductDetailScreen extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
-        error: (error, stack) => Center(
-          child: Text('加载失败: $error'),
+        error: (error, stack) => ErrorState(
+          message: '加载失败',
+          onRetry: () => ref.invalidate(productDetailProvider(productId)),
         ),
       ),
       bottomNavigationBar: productState.when(
@@ -197,14 +168,9 @@ class ProductDetailScreen extends ConsumerWidget {
           ),
           child: SafeArea(
             child: ElevatedButton(
-              onPressed: () => _openPddApp(product.id),
+              onPressed: () => _openPddApp(context, product.id),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                ),
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -214,7 +180,7 @@ class ProductDetailScreen extends ConsumerWidget {
                   Text(
                     '去拼多多查看',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -229,22 +195,27 @@ class ProductDetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openPddApp(String goodsId) async {
-    // 尝试打开拼多多App
+  Future<void> _openPddApp(BuildContext context, String goodsId) async {
     final pddUrl = 'pdd://goods_detail?goods_id=$goodsId';
     final webUrl = 'https://mobile.yangkeduo.com/goods.html?goods_id=$goodsId';
 
     try {
-      if (await canLaunchUrl(Uri.parse(pddUrl))) {
-        await launchUrl(Uri.parse(pddUrl));
-      } else if (await canLaunchUrl(Uri.parse(webUrl))) {
-        await launchUrl(
-          Uri.parse(webUrl),
-          mode: LaunchMode.externalApplication,
-        );
+      final pddUri = Uri.parse(pddUrl);
+      if (await canLaunchUrl(pddUri)) {
+        await launchUrl(pddUri);
+      } else {
+        final webUri = Uri.parse(webUrl);
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
       }
     } catch (e) {
-      // 无法打开链接
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('无法打开拼多多，请检查是否已安装'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 }

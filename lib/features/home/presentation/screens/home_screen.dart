@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/error_state.dart';
 import '../../providers/home_providers.dart';
-import '../widgets/project_card.dart';
 import '../widgets/project_list.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -36,7 +37,7 @@ class HomeScreen extends ConsumerWidget {
           ),
           // 用户头像
           IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.person_outline),
             onPressed: () {
               // TODO: 显示用户信息
             },
@@ -52,10 +53,10 @@ class HomeScreen extends ConsumerWidget {
                 horizontal: AppTheme.spacingM,
                 vertical: AppTheme.spacingXS,
               ),
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primarySubtleColor,
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.info_outline,
                     size: 16,
                     color: AppTheme.primaryColor,
@@ -63,7 +64,7 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(width: AppTheme.spacingXS),
                   Text(
                     '已同步 ${syncState.syncedCount} 件商品',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppTheme.primaryColor,
                       fontSize: 12,
                     ),
@@ -76,78 +77,36 @@ class HomeScreen extends ConsumerWidget {
           Expanded(
             child: projectListState.when(
               data: (projects) => projects.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.favorite_border,
-                            size: 80,
-                            color: AppTheme.textHintColor,
-                          ),
-                          const SizedBox(height: AppTheme.spacingM),
-                          Text(
-                            '还没有心愿项目',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                  color: AppTheme.textSecondaryColor,
-                                ),
-                          ),
-                          const SizedBox(height: AppTheme.spacingS),
-                          Text(
-                            '点击下方按钮创建你的第一个心愿',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: AppTheme.textHintColor,
-                                ),
-                          ),
-                        ],
+                  ? EmptyState(
+                      icon: Icons.favorite_border,
+                      title: '还没有心愿项目',
+                      subtitle: '点击下方按钮创建你的第一个心愿',
+                      action: ElevatedButton.icon(
+                        onPressed: () => context.push('/project/create'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('创建心愿'),
                       ),
                     )
-                  : ProjectList(projects: projects),
+                  : RefreshIndicator(
+                      onRefresh: () =>
+                          ref.read(projectListProvider.notifier).refresh(),
+                      child: ProjectList(projects: projects),
+                    ),
               loading: () => const Center(
                 child: CircularProgressIndicator(),
               ),
-              error: (error, stack) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 60,
-                      color: AppTheme.errorColor,
-                    ),
-                    const SizedBox(height: AppTheme.spacingM),
-                    Text(
-                      '加载失败',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: AppTheme.spacingS),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.read(projectListProvider.notifier).refresh();
-                      },
-                      child: const Text('重试'),
-                    ),
-                  ],
-                ),
+              error: (error, stack) => ErrorState(
+                message: '加载失败',
+                onRetry: () =>
+                    ref.read(projectListProvider.notifier).refresh(),
               ),
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          context.push('/project/create');
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('创建心愿'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/project/create'),
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme.dart';
+import '../../../../shared/constants/preset_data.dart';
+import '../../../../shared/widgets/scene_selector.dart';
+import '../../../../shared/widgets/tag_selector.dart';
 import '../../providers/project_providers.dart';
 import '../../../home/providers/home_providers.dart';
 import '../widgets/product_selector.dart';
@@ -18,29 +21,8 @@ class CreateProjectScreen extends ConsumerStatefulWidget {
 class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  String _selectedScene = '装修采购';
+  String _selectedScene = presetScenes.first;
   final List<String> _selectedTags = [];
-
-  // 预置场景列表
-  final List<String> _scenes = [
-    '装修采购',
-    '节日备货',
-    '批量采购',
-    '日常购物',
-    '礼物清单',
-    '旅行购物',
-    '其他',
-  ];
-
-  // 预置标签列表
-  final List<String> _availableTags = [
-    '紧急',
-    '重要',
-    '优惠',
-    '待比价',
-    '已比价',
-    '可购买',
-  ];
 
   @override
   void dispose() {
@@ -88,14 +70,10 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   // 项目名称
                   TextFormField(
                     controller: _nameController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: '项目名称',
                       hintText: '输入心愿项目名称',
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusMedium),
-                      ),
-                      prefixIcon: const Icon(Icons.favorite_outline),
+                      prefixIcon: Icon(Icons.favorite_outline),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -109,91 +87,35 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   // 场景选择
                   Text(
                     '选择场景',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppTheme.spacingS),
-                  Wrap(
-                    spacing: AppTheme.spacingXS,
-                    runSpacing: AppTheme.spacingXS,
-                    children: _scenes.map((scene) {
-                      final isSelected = _selectedScene == scene;
-                      return ChoiceChip(
-                        label: Text(scene),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() {
-                              _selectedScene = scene;
-                            });
-                          }
-                        },
-                        backgroundColor: AppTheme.surfaceColor,
-                        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
-                        labelStyle: TextStyle(
-                          color: isSelected
-                              ? AppTheme.primaryColor
-                              : AppTheme.textPrimaryColor,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusSmall),
-                          side: BorderSide(
-                            color: isSelected
-                                ? AppTheme.primaryColor
-                                : AppTheme.textHintColor.withOpacity(0.3),
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                  SceneSelector(
+                    scenes: presetScenes,
+                    selectedScene: _selectedScene,
+                    onSceneSelected: (scene) {
+                      setState(() {
+                        _selectedScene = scene;
+                      });
+                    },
                   ),
                   const SizedBox(height: AppTheme.spacingM),
 
                   // 标签选择
                   Text(
                     '添加标签',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppTheme.spacingS),
-                  Wrap(
-                    spacing: AppTheme.spacingXS,
-                    runSpacing: AppTheme.spacingXS,
-                    children: _availableTags.map((tag) {
-                      final isSelected = _selectedTags.contains(tag);
-                      return FilterChip(
-                        label: Text(tag),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedTags.add(tag);
-                            } else {
-                              _selectedTags.remove(tag);
-                            }
-                          });
-                        },
-                        backgroundColor: AppTheme.surfaceColor,
-                        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
-                        checkmarkColor: AppTheme.primaryColor,
-                        labelStyle: TextStyle(
-                          color: isSelected
-                              ? AppTheme.primaryColor
-                              : AppTheme.textPrimaryColor,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusSmall),
-                          side: BorderSide(
-                            color: isSelected
-                                ? AppTheme.primaryColor
-                                : AppTheme.textHintColor.withOpacity(0.3),
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                  TagSelector(
+                    availableTags: presetTags,
+                    selectedTags: _selectedTags,
+                    onTagsChanged: (tags) {
+                      setState(() {
+                        _selectedTags.clear();
+                        _selectedTags.addAll(tags);
+                      });
+                    },
                   ),
                 ],
               ),
@@ -210,15 +132,13 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                 children: [
                   Text(
                     '选择商品',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const Spacer(),
                   if (selectedProductIds.isNotEmpty)
                     Text(
                       '已选 ${selectedProductIds.length} 件',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppTheme.primaryColor,
                         fontSize: 14,
                       ),
@@ -228,11 +148,8 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             ),
 
             // 商品选择器
-            Expanded(
-              child: ProductSelector(
-                projectId: '', // 新项目还没有ID
-                initialSelectedIds: const {},
-              ),
+            const Expanded(
+              child: ProductSelector(projectId: ''),
             ),
           ],
         ),
