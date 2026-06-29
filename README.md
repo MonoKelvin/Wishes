@@ -13,13 +13,19 @@
 
 ## 技术栈
 
-- Flutter 3.44+
-- Dart 3.12+
-- Riverpod 3.0+ (状态管理)
-- GoRouter (路由管理)
-- Dio (网络请求)
-- Hive (本地存储)
-- flutter_secure_storage (加密存储)
+| 类别 | 技术 | 版本 |
+|------|------|------|
+| 框架 | Flutter | 3.44.4 |
+| 语言 | Dart | 3.12.2 |
+| 状态管理 | Riverpod | 3.0.3 |
+| 路由管理 | GoRouter | 14.8.1 |
+| 网络请求 | Dio | 5.7.0 |
+| 本地存储 | Hive | 2.2.3 |
+| 加密存储 | flutter_secure_storage | 9.2.4 |
+| Android SDK | Android 16 | API 36 |
+| Gradle | Gradle | 8.14 |
+| Android Gradle Plugin | AGP | 8.11.1 |
+| Kotlin | Kotlin | 2.2.20 |
 
 ## 项目结构
 
@@ -31,6 +37,7 @@ lib/
 │   ├── routes.dart              # 路由配置
 │   └── theme.dart               # 主题配置
 ├── core/                        # 核心基础设施
+│   ├── config/                  # API配置
 │   ├── constants/               # 常量定义
 │   ├── di/                      # 依赖注入
 │   ├── network/                 # 网络配置
@@ -57,16 +64,17 @@ lib/
 
 ### 前置条件
 
-1. 安装Flutter SDK 3.44+
-2. 安装Dart SDK 3.12+
-3. 配置Android Studio或Xcode开发环境
+1. 安装 Flutter SDK 3.44+
+2. 安装 Android Studio
+3. 配置 Android SDK 36
+4. 创建 Android 模拟器或连接真机
 
 ### 安装步骤
 
 1. 克隆项目
 ```bash
-git clone <repository-url>
-cd wishes
+git clone https://github.com/MonoKelvin/Wishes.git
+cd Wishes
 ```
 
 2. 安装依赖
@@ -76,7 +84,7 @@ flutter pub get
 
 3. 配置拼多多API密钥
 
-API密钥已在 `lib/core/config/api_config.dart` 中配置完成。如需修改，请编辑该文件：
+API密钥在 `lib/core/config/api_config.dart` 中配置：
 ```dart
 static const String pddClientId = 'your_client_id';
 static const String pddClientSecret = 'your_client_secret';
@@ -87,13 +95,14 @@ static const String pddClientSecret = 'your_client_secret';
 flutter run
 ```
 
-### 资源文件
+### 国内镜像配置
 
-在 `assets/` 目录下添加以下资源：
+如果遇到依赖下载问题，可以配置国内镜像：
 
-- `assets/images/` - 应用图片资源
-- `assets/icons/` - 应用图标资源
-- `assets/fonts/` - 字体文件（PingFang-Regular.ttf, PingFang-Medium.ttf, PingFang-Bold.ttf）
+```bash
+export PUB_HOSTED_URL="https://pub.flutter-io.cn"
+export FLUTTER_STORAGE_BASE_URL="https://storage.flutter-io.cn"
+```
 
 ## 开发指南
 
@@ -107,11 +116,11 @@ flutter run
 
 ### 状态管理
 
-使用Riverpod进行状态管理：
+使用Riverpod 3.0进行状态管理：
 
 ```dart
 // 定义Provider
-final myProvider = StateNotifierProvider<MyNotifier, MyState>((ref) {
+final myProvider = AsyncNotifierProvider<MyNotifier, MyState>(() {
   return MyNotifier();
 });
 
@@ -120,7 +129,11 @@ class MyWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(myProvider);
-    // ...
+    return state.when(
+      data: (data) => Text(data.toString()),
+      loading: () => CircularProgressIndicator(),
+      error: (error, stack) => Text('Error: $error'),
+    );
   }
 }
 ```
@@ -144,37 +157,31 @@ context.push('/detail/123');
 context.pop();
 ```
 
-## 测试
-
-运行单元测试：
-```bash
-flutter test
-```
-
-运行集成测试：
-```bash
-flutter test integration_test/
-```
-
 ## 构建
 
 ### Android
 ```bash
+# Debug版本
+flutter build apk --debug
+
+# Release版本
 flutter build apk --release
+
+# App Bundle
 flutter build appbundle --release
 ```
 
-### iOS
-```bash
-flutter build ios --release
-```
+## 平台支持
 
-## 注意事项
-
-1. 拼多多API需要申请开发者账号和API密钥
-2. 部分功能需要真机测试（如OAuth授权）
-3. 建议使用最新稳定版Flutter SDK
+| 平台 | 状态 |
+|------|------|
+| Android | ✅ 支持 |
+| iOS | 🚧 计划中 |
+| Web | 🚧 计划中 |
+| Windows | 🚧 计划中 |
+| macOS | 🚧 计划中 |
+| Linux | 🚧 计划中 |
 
 ## 许可证
 
-本项目仅供学习和个人使用。
+本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
